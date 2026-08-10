@@ -1,0 +1,21 @@
+{
+  "name": "cartographers-solo",
+  "version": "1.0.0",
+  "description": "[![Package Version](https://img.shields.io/hexpm/v/cartographer)](https://hex.pm/packages/cartographer) [![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/cartographer/)",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "gleam test",
+    "build": "gleam run -m lustre/dev build --minify && node scripts/bundle.mjs",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "jsdom": "^30.0.1"
+  }
+}
