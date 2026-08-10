@@ -71,15 +71,12 @@ await settled();
 assert($(".board"), "map board rendered after starting a game");
 assert($$(".edict-row").length === 4, "four edicts listed");
 
-// bugfix #1: edict conditions are expandable in-page (no external reference)
+// bugfix #1: scoring conditions are visible by default (no external reference)
 {
-  const row = $(".edict-row");
-  const summary = row && row.querySelector("summary");
-  assert(summary, "edict rows are expandable (summary present)");
-  click(summary);
-  await settled();
+  const openRows = $$(".edict-row[open]");
+  assert(openRows.length === 4, "all four edict conditions are open by default");
   const text = window.document.querySelector(".edict-row[open] .edict-text");
-  assert(text && text.textContent.length > 20, "edict condition text revealed");
+  assert(text && text.textContent.length > 20, "edict condition text present");
 }
 
 assert($(".card-panel"), "card panel rendered");

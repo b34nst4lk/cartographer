@@ -156,7 +156,7 @@ fn handle_key(model: Model, key: String) -> #(Model, Effect(Msg)) {
         Placing(draft) ->
           case key {
             "r" | "R" -> update(model, Rotate)
-            "f" | "F" -> update(model, Flip)
+            "f" | "F" | "m" | "M" -> update(model, Flip)
             "u" | "z" -> update(model, Undo)
             "1" | "2" | "3" | "4" ->
               case draft.is_fallback {

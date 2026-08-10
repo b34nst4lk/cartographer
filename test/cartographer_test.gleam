@@ -464,6 +464,74 @@ fn autoplay(g: Game, fuel: Int) -> Game {
   }
 }
 
+/// One full player action (pick/place/confirm) for the autoplay helpers.
+fn step(g: Game) -> Game {
+  case g.core.phase {
+    GameOver(_) -> g
+    Choosing(card) -> {
+      let idx = first_playable_variant(g, card)
+      game.pick_variant(g, idx)
+    }
+    Placing(_) -> {
+      let anchors = game.draft_anchors(g)
+      case anchors {
+        [] -> game.undo(g)
+        [a, ..] -> game.place_at(g, a)
+      }
+    }
+    AmbushShown(_, _) -> game.confirm_ambush(g)
+    SeasonEnd(_) -> game.confirm_season_end(g)
+  }
+}
+
+/// Step through a game until a ruins card is actually drawn (ruins_pending
+/// becomes True), or the game ends / fuel runs out.
+fn drive_until_ruins(g: Game, fuel: Int) -> Game {
+  case fuel <= 0 {
+    True -> g
+    False ->
+      case g.core.phase {
+        GameOver(_) -> g
+        _ ->
+          case g.core.ruins_pending {
+            True -> g
+            False -> drive_until_ruins(step(g), fuel - 1)
+          }
+      }
+  }
+}
+
+pub fn ruins_card_is_drawn_and_sets_pending_test() {
+  let g0 = game.new_game(2024, maps.wilderness_a())
+  let g = drive_until_ruins(g0, 300)
+  should.be_true(g.core.ruins_pending)
+  // the next shape must overlap an open ruins space
+  case g.core.phase {
+    Choosing(card) -> {
+      let idx = first_playable_variant(g, card)
+      let g2 = game.pick_variant(g, idx)
+      case g2.core.phase {
+        Placing(draft) -> {
+          let anchors = game.draft_anchors(g2)
+          should.be_true(list.length(anchors) > 0)
+          case draft.is_fallback {
+            // the 1x1 fallback may go anywhere; nothing to restrict
+            True -> Nil
+            False ->
+              should.be_true(
+                list.all(anchors, fn(a) {
+                  model.covers_open_ruins(g2.core.grid, draft.piece, a)
+                }),
+              )
+          }
+        }
+        _ -> should.fail()
+      }
+    }
+    _ -> should.fail()
+  }
+}
+
 // ---------------------------------------------------------------------------
 // forgiving placement (anchor snapping used by the UI)
 // ---------------------------------------------------------------------------

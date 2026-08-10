@@ -511,6 +511,9 @@ fn edicts_panel(core: Core) -> Element(Msg) {
             #("active", active),
             #("group-" <> group_class(card.group), True),
           ]),
+          // open by default so the scoring conditions are always visible;
+          // the player can still collapse a row and it stays collapsed
+          a.attribute("open", ""),
         ],
         [
           html.summary([a.class("edict-summary")], [

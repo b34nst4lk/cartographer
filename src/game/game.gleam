@@ -187,7 +187,9 @@ fn advance(core: Core) -> Core {
       let core = Core(..core, deck: rest)
       case entry {
         Ruins(card) -> {
-          let core = case core.ruins_pending {
+          let was_pending = core.ruins_pending
+          let core = Core(..core, ruins_pending: True)
+          let core = case was_pending {
             True ->
               log(
                 core,
