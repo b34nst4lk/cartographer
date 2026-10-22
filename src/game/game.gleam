@@ -1,16 +1,16 @@
 import game/ambush
 import game/cards.{
   type AmbushCard, type DeckEntry, type EdictCard, type ExploreCard,
-  type Variant, Variant, Explore, Ruins, Ambush,
+  type Variant, Ambush, Explore, Ruins, Variant,
 }
 import game/deck.{type EdictLetter}
 import game/maps.{type MapSpec}
 import game/model.{type Coord, type Grid, type Piece, type Terrain}
+import game/rng.{type Rng}
 import game/scoring
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
-import game/rng.{type Rng}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -122,7 +122,10 @@ fn log(core: Core, message: String) -> Core {
 }
 
 fn push(game: Game) -> Game {
-  Game(..game, undo_stack: list.take([game.core, ..game.undo_stack], undo_limit))
+  Game(
+    ..game,
+    undo_stack: list.take([game.core, ..game.undo_stack], undo_limit),
+  )
 }
 
 pub fn undo(game: Game) -> Game {
@@ -217,12 +220,10 @@ fn advance(core: Core) -> Core {
           Core(..core, phase: AmbushShown(card, anchor))
         }
         Explore(card) -> {
-          let core =
-            Core(..core, time_total: core.time_total + card.time)
+          let core = Core(..core, time_total: core.time_total + card.time)
           let core = log(core, card.name <> " revealed.")
           case forced_fallback(core, card) {
-            True ->
-              Core(..core, phase: Placing(fallback_draft(card, core)))
+            True -> Core(..core, phase: Placing(fallback_draft(card, core)))
             False -> Core(..core, phase: Choosing(card))
           }
         }
@@ -320,7 +321,10 @@ pub fn set_fallback_terrain(game: Game, terrain: Terrain) -> Game {
             core: Core(
               ..game.core,
               phase: Placing(
-                Draft(..draft, variant: Variant(..draft.variant, terrain: terrain)),
+                Draft(
+                  ..draft,
+                  variant: Variant(..draft.variant, terrain: terrain),
+                ),
               ),
             ),
           )
@@ -336,7 +340,11 @@ pub fn draft_anchors(game: Game) -> List(Coord) {
       case draft.is_fallback {
         True -> model.legal_anchors(game.core.grid, draft.piece)
         False ->
-          effective_anchors(game.core.grid, draft.piece, game.core.ruins_pending)
+          effective_anchors(
+            game.core.grid,
+            draft.piece,
+            game.core.ruins_pending,
+          )
       }
     _ -> []
   }
@@ -357,12 +365,14 @@ pub fn target_anchor(
   case covering {
     [] -> None
     [first, ..rest] ->
-      Some(list.fold(rest, first, fn(best, a) {
-        case coord_lt(coord_key(a, target), coord_key(best, target)) {
-          True -> a
-          False -> best
-        }
-      }))
+      Some(
+        list.fold(rest, first, fn(best, a) {
+          case coord_lt(coord_key(a, target), coord_key(best, target)) {
+            True -> a
+            False -> best
+          }
+        }),
+      )
   }
 }
 
@@ -391,8 +401,7 @@ fn coord_key(a: Coord, target: Coord) -> #(Int, Int, Int) {
 }
 
 fn coord_lt(x: #(Int, Int, Int), y: #(Int, Int, Int)) -> Bool {
-  x.0 < y.0
-  || { x.0 == y.0 && { x.1 < y.1 || { x.1 == y.1 && x.2 < y.2 } } }
+  x.0 < y.0 || { x.0 == y.0 && { x.1 < y.1 || { x.1 == y.1 && x.2 < y.2 } } }
 }
 
 /// Draw the current draft shape at `anchor`.
@@ -405,7 +414,8 @@ pub fn place_at(game: Game, anchor: Coord) -> Game {
           let game = push(game)
           let core = game.core
           let before = model.claimed_mountains(core.grid)
-          let grid2 = model.place(core.grid, draft.piece, anchor, draft.variant.terrain)
+          let grid2 =
+            model.place(core.grid, draft.piece, anchor, draft.variant.terrain)
           let mountain_coins = model.claimed_mountains(grid2) - before
           let shape_coin = case draft.variant.coin {
             True -> 1
@@ -433,8 +443,16 @@ fn placement_log(
   shape_coin: Int,
 ) -> List(String) {
   let base = case draft.is_fallback {
-    True -> "No shape fit — you draw a single square of " <> terrain_name(draft.variant.terrain) <> "."
-    False -> "You draw " <> draft.card.name <> " as " <> terrain_name(draft.variant.terrain) <> "."
+    True ->
+      "No shape fit — you draw a single square of "
+      <> terrain_name(draft.variant.terrain)
+      <> "."
+    False ->
+      "You draw "
+      <> draft.card.name
+      <> " as "
+      <> terrain_name(draft.variant.terrain)
+      <> "."
   }
   let gains = case mountain_coins, shape_coin {
     0, 0 -> ""
@@ -535,15 +553,15 @@ fn next_season(core: Core) -> Core {
 }
 
 fn game_over(core: Core) -> Core {
-  let total =
-    list.fold(core.season_scores, 0, fn(acc, s) { acc + s.total })
-  let corner_sum =
-    list.fold(core.edicts, 0, fn(acc, p) { acc + p.1.corner })
+  let total = list.fold(core.season_scores, 0, fn(acc, s) { acc + s.total })
+  let corner_sum = list.fold(core.edicts, 0, fn(acc, p) { acc + p.1.corner })
   let rating = total - corner_sum
   let result = GameResult(total, corner_sum, rating, title_for(rating))
   log(
     Core(..core, phase: GameOver(result)),
-    "Winter ends. Final score " <> int.to_string(total) <> ", rating "
+    "Winter ends. Final score "
+      <> int.to_string(total)
+      <> ", rating "
       <> int.to_string(rating)
       <> " — "
       <> title_for(rating)
@@ -588,7 +606,12 @@ pub type ResumePhase {
 
 /// Rebuild a Game from a fully restored Core and a phase hint.
 /// The undo stack always starts empty after a reload.
-pub fn rebuilt(map: MapSpec, seed_int: Int, core: Core, hint: ResumePhase) -> Game {
+pub fn rebuilt(
+  map: MapSpec,
+  seed_int: Int,
+  core: Core,
+  hint: ResumePhase,
+) -> Game {
   let phase = case hint {
     ResumeChoosing(card_id) ->
       case cards.explore_by_id(card_id) {
@@ -609,5 +632,10 @@ pub fn rebuilt(map: MapSpec, seed_int: Int, core: Core, hint: ResumePhase) -> Ga
       GameOver(GameResult(total, corner_sum, rating, title_for(rating)))
     }
   }
-  Game(map: map, seed_int: seed_int, core: Core(..core, phase: phase), undo_stack: [])
+  Game(
+    map: map,
+    seed_int: seed_int,
+    core: Core(..core, phase: phase),
+    undo_stack: [],
+  )
 }

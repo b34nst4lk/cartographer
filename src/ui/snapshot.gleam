@@ -5,11 +5,11 @@
 import game/cards.{type EdictCard}
 import game/deck.{type EdictLetter}
 import game/game.{
-  type Game, type GameResult, type SeasonScore, GameResult, SeasonScore,
-  Choosing, Placing, AmbushShown, SeasonEnd, GameOver,
+  type Game, type GameResult, type SeasonScore, AmbushShown, Choosing, GameOver,
+  GameResult, Placing, SeasonEnd, SeasonScore,
 }
 import game/maps
-import game/model.{type Cell, type Coord, type Grid, type Terrain} as model
+import game/model.{type Cell, type Coord, type Grid, type Terrain}
 import gleam/dynamic/decode
 import gleam/int
 import gleam/json
@@ -46,9 +46,7 @@ pub fn encode_save(data: SavedData) -> String {
     #("runs", json.array(data.runs, encode_run)),
     #(
       "active",
-      json.nullable(data.active, fn(g) {
-        json.object(snapshot_fields(g))
-      }),
+      json.nullable(data.active, fn(g) { json.object(snapshot_fields(g)) }),
     ),
   ])
   |> json.to_string
@@ -73,10 +71,7 @@ fn snapshot_fields(g: Game) -> List(#(String, json.Json)) {
     #("season", json.int(core.season_index)),
     #("time", json.int(core.time_total)),
     #("deck", json.array(core.deck, fn(e) { json.string(cards.entry_id(e)) })),
-    #(
-      "ambush_pile",
-      json.array(core.ambush_pile, fn(a) { json.string(a.id) }),
-    ),
+    #("ambush_pile", json.array(core.ambush_pile, fn(a) { json.string(a.id) })),
     #(
       "edicts",
       json.array(core.edicts, fn(p) {
@@ -181,7 +176,11 @@ fn saved_decoder() -> decode.Decoder(SavedData) {
     Some(Ok(g)) -> Some(g)
     _ -> None
   }
-  decode.success(SavedData(best: best, runs: list.take(runs, max_runs), active: active_game))
+  decode.success(SavedData(
+    best: best,
+    runs: list.take(runs, max_runs),
+    active: active_game,
+  ))
 }
 
 fn run_decoder() -> decode.Decoder(RunLog) {
@@ -246,7 +245,18 @@ fn score_decoder() -> decode.Decoder(
   use coins <- decode.field("coins", decode.int)
   use monster <- decode.field("monster", decode.int)
   use total <- decode.field("total", decode.int)
-  decode.success(#(season, e1l, e1id, e1s, e2l, e2id, e2s, coins, monster, total))
+  decode.success(#(
+    season,
+    e1l,
+    e1id,
+    e1s,
+    e2l,
+    e2id,
+    e2s,
+    coins,
+    monster,
+    total,
+  ))
 }
 
 // ---------------------------------------------------------------------------
@@ -320,10 +330,9 @@ fn map_try(l: List(a), f: fn(a) -> Result(b, Nil)) -> Result(List(b), Nil) {
   }
 }
 
-fn decode_edict_pair(pair: #(String, String)) -> Result(
-  #(EdictLetter, EdictCard),
-  Nil,
-) {
+fn decode_edict_pair(
+  pair: #(String, String),
+) -> Result(#(EdictLetter, EdictCard), Nil) {
   use l <- result.try(deck.letter_from_id(pair.0))
   use card <- result.try(cards.edict_by_id(pair.1))
   Ok(#(l, card))
@@ -470,11 +479,7 @@ fn terrain_from_char(ch: String) -> Result(Cell, Nil) {
 
 /// A finished game becomes a RunLog entry; returns the updated records and
 /// the new run (newest first, capped).
-pub fn record_run(
-  data: SavedData,
-  seed: Int,
-  result: GameResult,
-) -> SavedData {
+pub fn record_run(data: SavedData, seed: Int, result: GameResult) -> SavedData {
   let run = RunLog(seed, result.total, result.rating, result.title)
   let better = case data.best {
     None -> Some(run)
@@ -484,7 +489,11 @@ pub fn record_run(
         False -> data.best
       }
   }
-  SavedData(best: better, runs: list.take([run, ..data.runs], max_runs), active: None)
+  SavedData(
+    best: better,
+    runs: list.take([run, ..data.runs], max_runs),
+    active: None,
+  )
 }
 
 pub fn with_active(data: SavedData, game: Option(Game)) -> SavedData {
@@ -497,9 +506,13 @@ pub fn with_active(data: SavedData, game: Option(Game)) -> SavedData {
 
 /// Human-readable failure stage when decoding an active game, for tests.
 pub fn debug_active_stage(raw: String) -> String {
-  case json.parse(raw, decode.optional(game_decoder()) |> fn(d) {
-    decode.field("active", d, decode.success)
-  }) {
+  case
+    json.parse(
+      raw,
+      decode.optional(game_decoder())
+        |> fn(d) { decode.field("active", d, decode.success) },
+    )
+  {
     Error(e) -> "json/decoder error: " <> string.inspect(e)
     Ok(None) -> "active == None"
     Ok(Some(Error(Nil))) -> "rebuild failed"

@@ -1,9 +1,7 @@
-import game/cards.{
-  type AmbushCard, type DeckEntry, Ambush, Explore, Ruins,
-}
+import game/cards.{type AmbushCard, type DeckEntry, Ambush, Explore, Ruins}
+import game/rng.{type Rng}
 import gleam/int
 import gleam/list
-import game/rng.{type Rng}
 
 /// Edicts are the four fixed letters in the play area; one scoring card is
 /// randomly placed below each at setup.
@@ -47,11 +45,7 @@ fn letter_index(letter: EdictLetter) -> Int {
 }
 
 pub type SeasonInfo {
-  SeasonInfo(
-    name: String,
-    threshold: Int,
-    edicts: #(EdictLetter, EdictLetter),
-  )
+  SeasonInfo(name: String, threshold: Int, edicts: #(EdictLetter, EdictLetter))
 }
 
 pub fn season_info(index: Int) -> SeasonInfo {
@@ -80,13 +74,16 @@ fn first_of_shuffled(l: List(a), s: Rng) -> #(a, Rng) {
 pub fn draw_edicts(s: Rng) -> #(List(#(EdictLetter, cards.EdictCard)), Rng) {
   let #(picked, s1) =
     list.fold(cards.edict_groups(), #([], s), fn(acc, group) {
-      let #(card, seed2) = first_of_shuffled(cards.edicts_in_group(group), acc.1)
+      let #(card, seed2) =
+        first_of_shuffled(cards.edicts_in_group(group), acc.1)
       #([card, ..acc.0], seed2)
     })
   let #(letters, s2) = rng.shuffle(s1, [A, B, C, D])
   let pairs = list.zip(letters, picked)
   let sorted =
-    list.sort(pairs, fn(p, q) { int.compare(letter_index(p.0), letter_index(q.0)) })
+    list.sort(pairs, fn(p, q) {
+      int.compare(letter_index(p.0), letter_index(q.0))
+    })
   #(sorted, s2)
 }
 
@@ -118,8 +115,7 @@ pub fn build_season_deck(
     Ok(a) -> [a, ..carried]
     Error(Nil) -> carried
   }
-  let entries =
-    list.append(explore_entries(), list.map(carried2, cards.Ambush))
+  let entries = list.append(explore_entries(), list.map(carried2, cards.Ambush))
   let #(shuffled, s2) = rng.shuffle(s, entries)
   #(shuffled, pile2, carried2, s2)
 }

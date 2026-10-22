@@ -2,11 +2,11 @@
 //// cells. One flat fill + one darker ink glyph per terrain — the stripped-down
 //// look, staying friendly to the original game without copying its art.
 
-import game/model.{type Terrain} as model
-import lustre/attribute as a
-import lustre/element/svg
-import lustre/element.{type Element}
+import game/model.{type Terrain}
 import gleam/int
+import lustre/attribute as a
+import lustre/element.{type Element}
+import lustre/element/svg
 
 pub const ink = "#46351f"
 
@@ -71,7 +71,11 @@ fn attr(name: String, value: String) -> a.Attribute(msg) {
   a.attribute(name, value)
 }
 
-pub fn path(d: String, fill: String, extra: List(a.Attribute(msg))) -> Element(msg) {
+pub fn path(
+  d: String,
+  fill: String,
+  extra: List(a.Attribute(msg)),
+) -> Element(msg) {
   svg.path([attr("d", d), attr("fill", fill), ..extra])
 }
 

@@ -2,7 +2,7 @@
 //// terrain linework, ruins overlays, legal-anchor hints, and the ghost preview
 //// of the piece currently being positioned.
 
-import game/model.{type Coord, type Grid, type Piece, type Terrain} as model
+import game/model.{type Coord, type Grid, type Piece, type Terrain}
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -181,7 +181,9 @@ fn cell_elements(
     ]
   }
   let ruins = case model.grid_at(grid, r, c) {
-    Ok(model.Empty(True)) | Ok(model.Filled(_, True)) -> [theme.ruins_overlay(x, y)]
+    Ok(model.Empty(True)) | Ok(model.Filled(_, True)) -> [
+      theme.ruins_overlay(x, y),
+    ]
     _ -> []
   }
   [base, ..list.append(list.append(content, ruins), [])]
@@ -262,13 +264,10 @@ pub fn shape_thumb(
         attr("width", f(cell_px - 2)),
         attr("height", f(cell_px - 2)),
         attr("rx", "2"),
-        attr(
-          "fill",
-          case ghostly {
-            True -> "#9a8a66"
-            False -> theme.terrain_fill(terrain)
-          },
-        ),
+        attr("fill", case ghostly {
+          True -> "#9a8a66"
+          False -> theme.terrain_fill(terrain)
+        }),
       ])
     })
   let frame =

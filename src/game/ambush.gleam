@@ -1,8 +1,8 @@
 import game/cards.{
-  type AmbushCard, TopLeft, TopRight, BottomLeft,
-  BottomRight, Clockwise, CounterClockwise,
+  type AmbushCard, BottomLeft, BottomRight, Clockwise, CounterClockwise, TopLeft,
+  TopRight,
 }
-import game/model.{type Coord, type Grid, Monster} as model
+import game/model.{type Coord, type Grid, Monster}
 import gleam/list
 import gleam/option.{type Option, None, Some}
 
@@ -14,10 +14,7 @@ import gleam/option.{type Option, None, Some}
 ///
 /// `anchors_in_scan_order` enumerates every candidate anchor (the top-left of
 /// the shape's bounding box) in the order the scan tries them.
-pub fn anchors_in_scan_order(
-  size: Int,
-  card: AmbushCard,
-) -> List(Coord) {
+pub fn anchors_in_scan_order(size: Int, card: AmbushCard) -> List(Coord) {
   let #(h, w) = model.bounding(card.shape)
   let max_r = size - h
   let max_c = size - w
@@ -44,10 +41,14 @@ pub fn anchors_in_scan_order(
       list.flat_map(rows, fn(d) { list.map(cols, fn(c) { #(max_r - d, c) }) })
     // Left along the bottom edge from the bottom-right corner; then one row inward.
     BottomRight, Clockwise ->
-      list.flat_map(rows, fn(d) { list.map(cols, fn(c) { #(max_r - d, max_c - c) }) })
+      list.flat_map(rows, fn(d) {
+        list.map(cols, fn(c) { #(max_r - d, max_c - c) })
+      })
     // Up the right edge from the bottom-right corner; then one column inward.
     BottomRight, CounterClockwise ->
-      list.flat_map(cols, fn(d) { list.map(rows, fn(r) { #(max_r - r, max_c - d) }) })
+      list.flat_map(cols, fn(d) {
+        list.map(rows, fn(r) { #(max_r - r, max_c - d) })
+      })
   }
 }
 

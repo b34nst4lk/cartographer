@@ -1,10 +1,8 @@
 import game/cards
 import game/deck
-import game/game.{
-  type Game, Choosing, Placing, AmbushShown, SeasonEnd, GameOver,
-}
+import game/game.{type Game, AmbushShown, Choosing, GameOver, Placing, SeasonEnd}
 import game/maps
-import game/model.{type Coord, type Grid, type Terrain} as model
+import game/model.{type Coord, type Grid, type Terrain}
 import game/scoring
 import gleam/int
 import gleam/list
@@ -29,7 +27,12 @@ fn fill(grid: Grid, coords: List(Coord), t: Terrain) -> Grid {
   list.fold(coords, grid, fn(g, c) { model.place(g, [#(0, 0)], c, t) })
 }
 
-fn fill_piece(grid: Grid, rows: List(String), anchor: Coord, t: Terrain) -> Grid {
+fn fill_piece(
+  grid: Grid,
+  rows: List(String),
+  anchor: Coord,
+  t: Terrain,
+) -> Grid {
   model.place(grid, model.piece(rows), anchor, t)
 }
 
@@ -39,7 +42,12 @@ fn fill_piece(grid: Grid, rows: List(String), anchor: Coord, t: Terrain) -> Grid
 
 pub fn rotate_four_times_identity_test() {
   let p = model.piece(["#.", "##", "#."])
-  let p4 = p |> model.rotate_cw |> model.rotate_cw |> model.rotate_cw |> model.rotate_cw
+  let p4 =
+    p
+    |> model.rotate_cw
+    |> model.rotate_cw
+    |> model.rotate_cw
+    |> model.rotate_cw
   should.equal(p4, p)
 }
 
@@ -177,10 +185,7 @@ pub fn great_city_test() {
   let g =
     wilderness()
     // size-5 village cluster adjacent to the F6 mountain => ineligible
-    |> fill(
-      [#(4, 5), #(4, 6), #(4, 7), #(3, 7), #(2, 7)],
-      model.Village,
-    )
+    |> fill([#(4, 5), #(4, 6), #(4, 7), #(3, 7), #(2, 7)], model.Village)
     // size-3 cluster away from mountains
     |> fill([#(8, 0), #(9, 0), #(10, 0)], model.Village)
   should.equal(scoring.score(cards.GreatCity, g), 3)
@@ -189,7 +194,10 @@ pub fn great_city_test() {
 pub fn shieldgate_test() {
   let g =
     wilderness()
-    |> fill([#(0, 0), #(0, 1), #(0, 2), #(0, 3), #(0, 4), #(0, 5)], model.Village)
+    |> fill(
+      [#(0, 0), #(0, 1), #(0, 2), #(0, 3), #(0, 4), #(0, 5)],
+      model.Village,
+    )
     |> fill([#(3, 3), #(3, 4), #(4, 3), #(4, 4)], model.Village)
     |> fill([#(8, 8), #(8, 9), #(9, 8), #(9, 9)], model.Village)
   // sizes 6, 4, 4 => second largest 4 => 8
@@ -365,7 +373,10 @@ fn case_ok(r: Result(model.Cell, Nil)) -> model.Cell {
 
 import game/ambush
 
-fn game_ambush(g: Grid, card: cards.AmbushCard) -> #(Grid, option.Option(Coord)) {
+fn game_ambush(
+  g: Grid,
+  card: cards.AmbushCard,
+) -> #(Grid, option.Option(Coord)) {
   ambush.resolve(g, card)
 }
 
@@ -415,6 +426,7 @@ fn first_ambush_pile() {
   let #(pile, _) = deck.new_ambush_pile(rng.new(1))
   pile
 }
+
 // ---------------------------------------------------------------------------
 // full-game simulation: greedy autoplay until GameOver
 // ---------------------------------------------------------------------------
@@ -542,10 +554,7 @@ pub fn target_anchor_prefers_exact_cell_test() {
   let grid = maps.new_grid(maps.wilderness_a())
   let piece = model.piece(["##"])
   let legal = model.legal_anchors(grid, piece)
-  should.equal(
-    game.target_anchor(legal, piece, #(4, 1)),
-    Some(#(4, 1)),
-  )
+  should.equal(game.target_anchor(legal, piece, #(4, 1)), Some(#(4, 1)))
 }
 
 pub fn target_anchor_snaps_inside_the_map_edge_test() {
@@ -554,10 +563,7 @@ pub fn target_anchor_snaps_inside_the_map_edge_test() {
   let legal = model.legal_anchors(grid, piece)
   // hovering the rightmost column: anchoring there would fall out of bounds,
   // so the shape hugs the cursor from the left instead
-  should.equal(
-    game.target_anchor(legal, piece, #(7, 10)),
-    Some(#(7, 9)),
-  )
+  should.equal(game.target_anchor(legal, piece, #(7, 10)), Some(#(7, 9)))
 }
 
 pub fn target_anchor_snaps_around_a_mountain_test() {
@@ -566,10 +572,7 @@ pub fn target_anchor_snaps_around_a_mountain_test() {
   let legal = model.legal_anchors(grid, piece)
   // mountain at #(5, 5): anchoring at #(5, 4) would overlap it; the legal
   // placement one column left still covers the hovered cell
-  should.equal(
-    game.target_anchor(legal, piece, #(5, 4)),
-    Some(#(5, 3)),
-  )
+  should.equal(game.target_anchor(legal, piece, #(5, 4)), Some(#(5, 3)))
 }
 
 pub fn target_anchor_refuses_a_mountain_cell_test() {
@@ -587,10 +590,7 @@ pub fn click_anchor_still_accepts_empty_origin_shapes_test() {
   // no covering anchor maps onto the dot cell...
   should.equal(game.target_anchor(legal, piece, #(0, 0)), None)
   // ...but a click there must still place at that anchor
-  should.equal(
-    game.click_anchor(legal, piece, #(0, 0)),
-    Some(#(0, 0)),
-  )
+  should.equal(game.click_anchor(legal, piece, #(0, 0)), Some(#(0, 0)))
 }
 
 // ---------------------------------------------------------------------------

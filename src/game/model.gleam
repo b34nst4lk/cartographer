@@ -249,7 +249,12 @@ pub fn legal_anchors(grid: Grid, piece: Piece) -> List(Coord) {
   can_place(grid, piece, a)
 }
 
-pub fn place(grid: Grid, piece: Piece, anchor: Coord, terrain: Terrain) -> Grid {
+pub fn place(
+  grid: Grid,
+  piece: Piece,
+  anchor: Coord,
+  terrain: Terrain,
+) -> Grid {
   use g, c <- list.fold(piece_at(piece, anchor), grid)
   case grid_at(g, c.0, c.1) {
     Ok(cell) -> set_cell(g, c.0, c.1, Filled(terrain, on_ruins(cell)))

@@ -2,13 +2,15 @@
 //// panel (choose / place / ambush / season report / game over), the edicts
 //// strip, the time track and the event log.
 
-import game/cards.{type AmbushCard, type EdictCard, type ExploreCard, type Variant}
+import game/cards.{
+  type AmbushCard, type EdictCard, type ExploreCard, type Variant,
+}
 import game/deck.{type EdictLetter, type SeasonInfo}
 import game/game.{
-  type Core, type GameResult, type SeasonScore,
-  Choosing, Placing, AmbushShown, SeasonEnd, GameOver,
+  type Core, type GameResult, type SeasonScore, AmbushShown, Choosing, GameOver,
+  Placing, SeasonEnd,
 }
-import game/model as model
+import game/model
 import gleam/int
 import gleam/list
 import gleam/option.{None, Some}
@@ -18,10 +20,10 @@ import lustre/element/html
 import lustre/event
 import ui/board
 import ui/msgs.{
-  type Msg, type Model, type UiGame, BoardClicked, ChooseFallbackTerrain,
-  ClearRecords, ConfirmAmbush, ConfirmSeason, Flip, LeftBoard, PickVariant,
-  QuitToTitle, ResumeSavedGame, Rotate, SeedInputChanged, StartNewGame, Undo,
-  Hovered,
+  type Model, type Msg, type UiGame, BoardClicked, ChooseFallbackTerrain,
+  ClearRecords, ConfirmAmbush, ConfirmSeason, Flip, Hovered, LeftBoard,
+  PickVariant, QuitToTitle, ResumeSavedGame, Rotate, SeedInputChanged,
+  StartNewGame, Undo,
 }
 import ui/snapshot.{type RunLog}
 import ui/theme
@@ -44,7 +46,9 @@ pub fn title_screen(model: Model) -> Element(Msg) {
       html.div([a.class("title-compass")], [t("✦")]),
       html.h1([a.class("title-heading")], [t("CARTOGRAPHERS")]),
       html.p([a.class("title-sub")], [
-        t("A solo expedition through the wilds, four seasons of ink and wilderland."),
+        t(
+          "A solo expedition through the wilds, four seasons of ink and wilderland.",
+        ),
       ]),
       best_block(model.save.best),
       html.hr([a.class("rule")]),
@@ -66,19 +70,29 @@ pub fn title_screen(model: Model) -> Element(Msg) {
           None -> html.span([], [])
         },
       ]),
-      history_block(model.save.runs, model.save.best != None || model.save.runs != []),
+      history_block(
+        model.save.runs,
+        model.save.best != None || model.save.runs != [],
+      ),
     ]),
   ])
 }
 
 fn best_block(best: option.Option(RunLog)) -> Element(Msg) {
   case best {
-    None ->
-      html.p([a.class("best none")], [t("No completed expeditions yet.")])
+    None -> html.p([a.class("best none")], [t("No completed expeditions yet.")])
     Some(run) ->
       html.p([a.class("best")], [
         html.strong([], [t("Personal best: " <> f(run.score))]),
-        t(" — " <> run.title <> " (rating " <> signed(run.rating) <> ", seed " <> f(run.seed) <> ")"),
+        t(
+          " — "
+          <> run.title
+          <> " (rating "
+          <> signed(run.rating)
+          <> ", seed "
+          <> f(run.seed)
+          <> ")",
+        ),
       ])
   }
 }
@@ -95,12 +109,12 @@ fn history_block(runs: List(RunLog), any: Bool) -> Element(Msg) {
             html.li([], [
               t(
                 f(run.score)
-                  <> " — "
-                  <> run.title
-                  <> "  ·  rating "
-                  <> signed(run.rating)
-                  <> "  ·  seed "
-                  <> f(run.seed),
+                <> " — "
+                <> run.title
+                <> "  ·  rating "
+                <> signed(run.rating)
+                <> "  ·  seed "
+                <> f(run.seed),
               ),
             ])
           }),
@@ -201,7 +215,6 @@ fn game_score_running(ui: UiGame) -> Int {
   game.score_so_far(ui.game.core)
 }
 
-
 fn hints_row(ui: UiGame) -> Element(Msg) {
   let hint = case ui.game.core.phase {
     Choosing(_) -> "Choose a shape from the card's options."
@@ -213,7 +226,8 @@ fn hints_row(ui: UiGame) -> Element(Msg) {
           case ui.game.core.ruins_pending {
             True ->
               "The ruins decree a drawing must overlap a ruins space. Click a marked space."
-            False -> "Position the shape, then click a space to draw it. R rotates, F mirrors."
+            False ->
+              "Position the shape, then click a space to draw it. R rotates, F mirrors."
           }
       }
     AmbushShown(_, _) -> ""
@@ -243,7 +257,11 @@ fn explore_choosing(ui: UiGame, card: ExploreCard) -> Element(Msg) {
     ruins_banner(core.ruins_pending),
     card_header(card.name, card.time, "explore"),
     case card_has_coin(card) {
-      True -> html.p([a.class("coinnote")], [board.coin_badge(14), t(" This card offers a coin option.")])
+      True ->
+        html.p([a.class("coinnote")], [
+          board.coin_badge(14),
+          t(" This card offers a coin option."),
+        ])
       False -> html.span([], [])
     },
     html.div(
@@ -295,7 +313,9 @@ fn explore_placing(ui: UiGame, draft: game.Draft) -> Element(Msg) {
             },
           ]),
           html.div([a.class("btn-row")], [
-            html.button([a.class("btn"), event.on_click(Rotate)], [t("Rotate ⟳")]),
+            html.button([a.class("btn"), event.on_click(Rotate)], [
+              t("Rotate ⟳"),
+            ]),
             html.button([a.class("btn"), event.on_click(Flip)], [t("Mirror ⇋")]),
           ]),
           html.button([a.class("btn subtle"), event.on_click(Undo)], [
@@ -310,7 +330,9 @@ fn fallback_controls(ui: UiGame) -> Element(Msg) {
   let terrains = [model.Forest, model.Village, model.Farm, model.Water]
   html.div([a.class("fallback")], [
     html.p([a.class("fallback-note")], [
-      t("None of the offered shapes fit. Draw a single space instead — pick its terrain:"),
+      t(
+        "None of the offered shapes fit. Draw a single space instead — pick its terrain:",
+      ),
     ]),
     html.div(
       [a.class("btn-row wrap")],
@@ -324,14 +346,20 @@ fn fallback_controls(ui: UiGame) -> Element(Msg) {
             ]),
             event.on_click(ChooseFallbackTerrain(t_)),
           ],
-          [board.shape_thumb([#(0, 0)], t_, 14, False), t(theme.terrain_label(t_))],
+          [
+            board.shape_thumb([#(0, 0)], t_, 14, False),
+            t(theme.terrain_label(t_)),
+          ],
         )
       }),
     ),
   ])
 }
 
-fn ambush_panel(card: AmbushCard, placed: option.Option(model.Coord)) -> Element(Msg) {
+fn ambush_panel(
+  card: AmbushCard,
+  placed: option.Option(model.Coord),
+) -> Element(Msg) {
   html.div([a.class("card-panel ambush")], [
     card_header(card.name, 0, "ambush"),
     html.div([a.class("ambush-body")], [
@@ -341,10 +369,7 @@ fn ambush_panel(card: AmbushCard, placed: option.Option(model.Coord)) -> Element
     html.p([a.class("ambush-outcome " <> outcome_class(placed))], [
       t(case placed {
         Some(#(r, c)) ->
-          "Monsters pour in at "
-            <> board.row_letter(r)
-            <> f(c + 1)
-            <> "."
+          "Monsters pour in at " <> board.row_letter(r) <> f(c + 1) <> "."
         None -> "No room for an invasion — the card is disregarded."
       }),
     ]),
@@ -442,7 +467,14 @@ fn season_receipt(ui: UiGame) -> Element(Msg) {
     [a.class("receipt")],
     list.map(scores, fn(s) {
       html.li([], [
-        t(s.season_name <> " " <> signed(s.total) <> "  (monsters −" <> f(s.monster) <> ")"),
+        t(
+          s.season_name
+          <> " "
+          <> signed(s.total)
+          <> "  (monsters −"
+          <> f(s.monster)
+          <> ")",
+        ),
       ])
     }),
   )
@@ -519,10 +551,9 @@ fn edicts_panel(core: Core) -> Element(Msg) {
           html.summary([a.class("edict-summary")], [
             html.span([a.class("edict-letter")], [t(deck.letter_id(letter))]),
             html.span([a.class("edict-name")], [t(card.name)]),
-            html.span(
-              [a.class("edict-corner"), a.title("the number to beat")],
-              [t(f(card.corner))],
-            ),
+            html.span([a.class("edict-corner"), a.title("the number to beat")], [
+              t(f(card.corner)),
+            ]),
           ]),
           html.p([a.class("edict-text")], [t(card.text)]),
         ],
@@ -549,10 +580,7 @@ fn track_panel(core: Core) -> Element(Msg) {
   let spent = int.min(core.time_total, info.threshold)
   let pips =
     list.map(model.ints(1, info.threshold), fn(i) {
-      html.span(
-        [a.classes([#("pip", True), #("spent", i <= spent)])],
-        [],
-      )
+      html.span([a.classes([#("pip", True), #("spent", i <= spent)])], [])
     })
   let overflow = core.time_total - info.threshold
   html.div([a.class("panel track")], [
@@ -575,9 +603,7 @@ fn log_panel(core: Core) -> Element(Msg) {
     html.h3([a.class("panel-title")], [t("Journal")]),
     html.ul(
       [a.class("log-list")],
-      list.map(list.take(core.log, 8), fn(line) {
-        html.li([], [t(line)])
-      }),
+      list.map(list.take(core.log, 8), fn(line) { html.li([], [t(line)]) }),
     ),
   ])
 }

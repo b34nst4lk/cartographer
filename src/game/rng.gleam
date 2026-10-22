@@ -45,8 +45,7 @@ pub fn shuffle(state: Rng, items: List(a)) -> #(List(a), Rng) {
       let #(key, s2) = step(s)
       #([#(key, item), ..pairs], s2)
     })
-  let sorted =
-    list.sort(keyed, fn(a, b) { compare(a.0, b.0) })
+  let sorted = list.sort(keyed, fn(a, b) { compare(a.0, b.0) })
   #(list.map(sorted, fn(p) { p.1 }), state2)
 }
 

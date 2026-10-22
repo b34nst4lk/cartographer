@@ -1,9 +1,9 @@
 import game/cards.{
-  type EdictKind, SentinelWood, Greenbough, Treetower, StonesideForest,
-  CanalLake, GoldenGranary, MagesValley, ShoresideExpanse, Wildholds, GreatCity,
-  Shieldgate, GreengoldPlains, Borderlands, BrokenRoad, LostBarony, Cauldrons,
+  type EdictKind, Borderlands, BrokenRoad, CanalLake, Cauldrons, GoldenGranary,
+  GreatCity, Greenbough, GreengoldPlains, LostBarony, MagesValley, SentinelWood,
+  Shieldgate, ShoresideExpanse, StonesideForest, Treetower, Wildholds,
 }
-import game/model.{type Cell, type Coord, type Grid, type Terrain} as model
+import game/model.{type Cell, type Coord, type Grid, type Terrain}
 import gleam/int
 import gleam/list
 import gleam/set.{type Set}
@@ -206,7 +206,8 @@ fn golden_granary(grid: Grid) -> Int {
     })
   let farms_on_ruins =
     model.coords_matching(grid, fn(cell) {
-      model.cell_terrain(cell) == option.Some(model.Farm) && model.on_ruins(cell)
+      model.cell_terrain(cell) == option.Some(model.Farm)
+      && model.on_ruins(cell)
     })
     |> list.length
   waters + 3 * farms_on_ruins

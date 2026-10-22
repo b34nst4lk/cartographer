@@ -1,9 +1,9 @@
 //// Lustre application shell: init/update/view plus the localStorage save/load
 //// plumbing. All game rules live in src/game/*; all markup in src/ui/*.
 
-import game/game.{Choosing, Placing, AmbushShown, SeasonEnd, GameOver}
+import game/game.{AmbushShown, Choosing, GameOver, Placing, SeasonEnd}
 import game/maps
-import game/model.{Forest, Village, Farm, Water}
+import game/model.{Farm, Forest, Village, Water}
 import gleam/int
 import gleam/option.{None, Some}
 import lustre.{type App}
@@ -13,11 +13,11 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import ui/msgs.{
-  type Model, type Msg, Model, UiGame, TitleScreen, GameScreen,
-  SaveLoaded, SeedInputChanged, StartNewGame, BeginGame, ResumeSavedGame,
-  Hovered, LeftBoard, BoardClicked, PickVariant, Rotate, Flip,
-  ChooseFallbackTerrain, ConfirmAmbush, ConfirmSeason, Undo, QuitToTitle,
-  ClearRecords, FocusRoot, KeyPressed,
+  type Model, type Msg, BeginGame, BoardClicked, ChooseFallbackTerrain,
+  ClearRecords, ConfirmAmbush, ConfirmSeason, Flip, FocusRoot, GameScreen,
+  Hovered, KeyPressed, LeftBoard, Model, PickVariant, QuitToTitle,
+  ResumeSavedGame, Rotate, SaveLoaded, SeedInputChanged, StartNewGame,
+  TitleScreen, UiGame, Undo,
 }
 import ui/panels
 import ui/snapshot
@@ -73,11 +73,10 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     StartNewGame ->
       case int.parse(model.seed_input) {
         Ok(seed) -> begin_game(model, seed)
-        Error(Nil) ->
-          #(
-            model,
-            effect.from(fn(dispatch) { dispatch(BeginGame(store.now_int())) }),
-          )
+        Error(Nil) -> #(
+          model,
+          effect.from(fn(dispatch) { dispatch(BeginGame(store.now_int())) }),
+        )
       }
     BeginGame(seed) -> begin_game(model, seed)
     ResumeSavedGame ->
@@ -89,12 +88,12 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
           #(model, focus_eff())
         }
       }
-    Hovered(coord) -> with_ui(model, fn(ui) {
-      #(UiGame(..ui, hover: Some(coord)), effect.none())
-    })
-    LeftBoard -> with_ui(model, fn(ui) {
-      #(UiGame(..ui, hover: None), effect.none())
-    })
+    Hovered(coord) ->
+      with_ui(model, fn(ui) {
+        #(UiGame(..ui, hover: Some(coord)), effect.none())
+      })
+    LeftBoard ->
+      with_ui(model, fn(ui) { #(UiGame(..ui, hover: None), effect.none()) })
     BoardClicked(coord) ->
       with_game_ui(model, fn(ui) {
         case ui.game.core.phase {
@@ -102,11 +101,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
             // forgiving placement: use the nearest legal anchor whose shape
             // covers the clicked cell, not necessarily the cell itself
             case
-              game.click_anchor(
-                game.draft_anchors(ui.game),
-                draft.piece,
-                coord,
-              )
+              game.click_anchor(game.draft_anchors(ui.game), draft.piece, coord)
             {
               Some(anchor) -> game.place_at(ui.game, anchor)
               None -> ui.game
@@ -114,7 +109,8 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
           _ -> ui.game
         }
       })
-    PickVariant(i) -> with_game_ui(model, fn(ui) { game.pick_variant(ui.game, i) })
+    PickVariant(i) ->
+      with_game_ui(model, fn(ui) { game.pick_variant(ui.game, i) })
     Rotate -> with_game_ui(model, fn(ui) { game.rotate_draft(ui.game) })
     Flip -> with_game_ui(model, fn(ui) { game.flip_draft(ui.game) })
     ChooseFallbackTerrain(t) ->
@@ -126,8 +122,10 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
           #(Model(..model, game: Some(ui2)), effect.none())
         }
       }
-    ConfirmAmbush -> with_game_ui(model, fn(ui) { game.confirm_ambush(ui.game) })
-    ConfirmSeason -> with_game_ui(model, fn(ui) { game.confirm_season_end(ui.game) })
+    ConfirmAmbush ->
+      with_game_ui(model, fn(ui) { game.confirm_ambush(ui.game) })
+    ConfirmSeason ->
+      with_game_ui(model, fn(ui) { game.confirm_season_end(ui.game) })
     Undo -> with_game_ui(model, fn(ui) { game.undo(ui.game) })
     QuitToTitle -> {
       let model = Model(..model, screen: TitleScreen)
@@ -135,11 +133,7 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     }
     ClearRecords -> {
       let save =
-        snapshot.SavedData(
-          best: None,
-          runs: [],
-          active: model.save.active,
-        )
+        snapshot.SavedData(best: None, runs: [], active: model.save.active)
       let model = Model(..model, save: save)
       #(model, persist(model))
     }
@@ -238,7 +232,6 @@ fn with_game_ui(
 
 /// ChooseFallbackTerrain is handled directly; this section intentionally
 /// keeps only the general helpers.
-
 fn active_of(g: game.Game) -> option.Option(game.Game) {
   case g.core.phase {
     GameOver(_) -> None

@@ -1,8 +1,8 @@
 //// Message and app-state types, kept in their own module so the view modules
 //// and the update loop can share them without import cycles.
 
-import game/model.{type Coord, type Terrain}
 import game/game.{type Game}
+import game/model.{type Coord, type Terrain}
 import gleam/option.{type Option, None}
 import ui/snapshot.{type SavedData}
 
