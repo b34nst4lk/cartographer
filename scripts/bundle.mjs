@@ -1,7 +1,22 @@
 #!/usr/bin/env node
-// Inline the compiled JS bundle and the stylesheet into one self-contained
-// HTML file: dist/cartographers-solo.html (also copied to dist/index.html).
-import { readFileSync, writeFileSync } from "node:fs";
+// Bundle the compiled Gleam output with esbuild, then inline the resulting
+// JS bundle and the stylesheet into one self-contained HTML file:
+// dist/cartographers-solo.html (also copied to dist/index.html).
+// Erlang-free: `gleam build --target javascript` produces the modules; the
+// bundling step below shells out to esbuild via npx (cached after first use).
+import { execSync } from "node:child_process";
+import { readFileSync, rmSync, writeFileSync } from "node:fs";
+
+writeFileSync(
+  ".cartographer-entry.mjs",
+  `import { main } from "./build/dev/javascript/cartographer/cartographer.mjs";
+main();`,
+);
+execSync(
+  "npx --yes esbuild .cartographer-entry.mjs --bundle --minify --charset=utf8 --format=esm --platform=browser --outfile=dist/cartographer.js",
+  { stdio: "inherit" },
+);
+rmSync(".cartographer-entry.mjs");
 
 const js = readFileSync("dist/cartographer.js", "utf8");
 const css = readFileSync("assets/app.css", "utf8");
