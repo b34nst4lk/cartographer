@@ -3,7 +3,8 @@
 A browser implementation of the board game **Cartographers** with the official
 **solo ruleset**, written in [Gleam](https://gleam.run) +
 [Lustre](https://lustre.build). Ships as a single self-contained HTML file —
-no server, no backend, no network. All art is original minimal linework
+no server, no backend; the app runs offline (when opened from jacks.im the
+page counts visits via analytics). All art is original minimal linework
 (parchment, flat muted terrain colours); official card texts are transcribed
 for private use.
 
